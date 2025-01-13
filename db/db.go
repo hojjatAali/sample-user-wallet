@@ -4,7 +4,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
-	"user_wallet/models"
+	"user_wallet/struct"
 )
 
 var DB *gorm.DB
@@ -17,7 +17,7 @@ func Connect() {
 		log.Fatal("failed to connect to database:", err)
 	}
 
-	err = DB.AutoMigrate(&models.User{}, &models.Wallet{})
+	err = DB.AutoMigrate(&structs.User{}, &structs.Wallet{})
 	if err != nil {
 		log.Fatal("failed to migrate database:", err)
 	}
