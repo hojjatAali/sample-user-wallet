@@ -3,7 +3,8 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"user_wallet/db"
-	"user_wallet/routes"
+	"user_wallet/handlers/user"
+	"user_wallet/handlers/wallet"
 )
 
 func main() {
@@ -12,7 +13,8 @@ func main() {
 
 	router := gin.Default()
 
-	routes.InitRoutes(router)
+	user.InitRoutes(router)
+	wallet.InitRoutes(router)
 
 	router.Run(":8000")
 }
