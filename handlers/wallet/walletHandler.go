@@ -9,14 +9,21 @@ import (
 )
 
 func CreateWallet(c *gin.Context) {
-
-	var wallet structs.WallerCreateRQ
-
+	var wallet structs.Wallet
 	var user structs.User
 
-	if err := c.BindJSON(&wallet); err != nil {
+	var createWalletRQ structs.WalletCreateRQ
+
+	if err := c.BindJSON(&createWalletRQ); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	if createWalletRQ.UserId != nil {
+		wallet.UserId = *createWalletRQ.UserId
+	}
+	if createWalletRQ.Balance != nil {
+		wallet.Balance = *createWalletRQ.Balance
 	}
 
 	err := db.DB.Where("id = ?", wallet.UserId).First(&user).Error
@@ -36,24 +43,40 @@ func CreateWallet(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Wallet created successfully"})
-
 }
 
 func GetWalletByUserId(c *gin.Context) {
+	var user structs.User
+	var wallet structs.Wallet
 
-	userId, err := strconv.Atoi(c.Param("user-id"))
+	userId, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	var wallet structs.Wallet
+	err = db.DB.Where("id = ?", userId).First(&user).Error
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	err = db.DB.Where("user_id = ?", userId).First(&wallet).Error
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not have wallet"})
+		return
+	}
+
 	if err = db.DB.Find(&wallet, "user_id = ?", userId).Preload("User").Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, wallet)
+	userWalletResponse := structs.UserWalletResponse{
+		User:   user,
+		Wallet: wallet,
+	}
+
+	c.JSON(http.StatusOK, userWalletResponse)
 
 }
