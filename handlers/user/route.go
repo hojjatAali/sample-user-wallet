@@ -7,7 +7,7 @@ func InitRoutes(c *gin.Engine) {
 	{
 		userRoutes.POST("", CreateUser)
 		userRoutes.GET("", GetUsers)
-		userRoutes.GET("/:id/wallet", GetUserByWallet)
+		userRoutes.GET("/:id", GetUser)
 		userRoutes.PUT("/:id", UpdateUser)
 		userRoutes.DELETE("/:id", DeleteUser)
 	}

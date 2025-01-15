@@ -1,9 +1,11 @@
 package user
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"user_wallet/db"
+	"strconv"
+	"user_wallet/service"
 	"user_wallet/struct"
 )
 
@@ -14,67 +16,90 @@ func CreateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	userService := service.UserService{}
 
-	if err := db.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	newUser, err := userService.CreateUser(user)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.New("can not create user")})
 		return
 	}
 
-	c.JSON(http.StatusCreated, user)
+	c.JSON(http.StatusCreated, newUser)
 }
 
-func GetUserByWallet(c *gin.Context) {
+func GetUser(c *gin.Context) {
 
-	userID := c.Param("user_id")
-
-	if err := db.DB.Where("id= ?", userID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	var wallet structs.Wallet
-	if err := db.DB.Find(&wallet, "user_id = ?", userID).Preload("User").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, wallet)
+	userService := service.UserService{}
+	userWalletResponse, err := userService.GetUser(userID)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	if userWalletResponse.Wallet.ID == 0 {
+		c.JSON(http.StatusOK, userWalletResponse.User)
+		return
+	}
+
+	c.JSON(http.StatusOK, userWalletResponse)
 
 }
 
 func UpdateUser(c *gin.Context) {
 	var user structs.UserUpdateRQ
+	userId, err := strconv.Atoi(c.Param("id"))
 
-	err := c.ShouldBindJSON(&user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	err = c.ShouldBindJSON(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := db.DB.Updates(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, user)
-}
 
-func DeleteUser(c *gin.Context) {
-	id := c.Param("id")
-	err := db.DB.Find(&structs.User{}, id).Error
+	userService := service.UserService{}
+
+	updatedUser, err := userService.UpdateUser(userId, user)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if err := db.DB.Delete(&structs.User{}, id).Error; err != nil {
+
+	c.JSON(http.StatusOK, updatedUser)
+}
+
+func DeleteUser(c *gin.Context) {
+	userId, err := strconv.Atoi(c.Param("id"))
+
+	userService := service.UserService{}
+
+	err = userService.DeleteUser(userId)
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 func GetUsers(c *gin.Context) {
-	var users []structs.User
-	if err := db.DB.Find(&users).Error; err != nil {
+	userServie := service.UserService{}
+	users, err := userServie.GetUsers()
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
 	}
+
 	c.JSON(http.StatusOK, users)
 
 }
