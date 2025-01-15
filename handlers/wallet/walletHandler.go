@@ -4,13 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
-	"user_wallet/db"
+	"user_wallet/service"
 	"user_wallet/struct"
 )
 
 func CreateWallet(c *gin.Context) {
-	var wallet structs.Wallet
-	var user structs.User
 
 	var createWalletRQ structs.WalletCreateRQ
 
@@ -19,35 +17,29 @@ func CreateWallet(c *gin.Context) {
 		return
 	}
 
-	if createWalletRQ.UserId != nil {
-		wallet.UserId = *createWalletRQ.UserId
-	}
-	if createWalletRQ.Balance != nil {
-		wallet.Balance = *createWalletRQ.Balance
-	}
+	walletService := service.WalletService{}
 
-	err := db.DB.Where("id = ?", wallet.UserId).First(&user).Error
+	wallet, err := walletService.CreateWallet(createWalletRQ)
+
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-	err = db.DB.Where("user_id = ?", wallet.UserId).First(&wallet).Error
-	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "User wallet already exists"})
-		return
-	}
-
-	if err := db.DB.Create(&wallet).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		var status int
+		switch err.Error() {
+		case "user not found":
+			status = http.StatusNotFound
+		case "user wallet already exists":
+			status = http.StatusConflict
+		default:
+			status = http.StatusInternalServerError
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Wallet created successfully"})
+	c.JSON(http.StatusCreated, wallet)
 }
 
 func GetWalletByUserId(c *gin.Context) {
-	var user structs.User
-	var wallet structs.Wallet
 
 	userId, err := strconv.Atoi(c.Param("id"))
 
@@ -56,20 +48,12 @@ func GetWalletByUserId(c *gin.Context) {
 		return
 	}
 
-	err = db.DB.Where("id = ?", userId).First(&user).Error
+	walletService := service.WalletService{}
+	user, wallet, err := walletService.GetUserWallet(userId)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
-	}
-	err = db.DB.Where("user_id = ?", userId).First(&wallet).Error
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not have wallet"})
-		return
-	}
 
-	if err = db.DB.Find(&wallet, "user_id = ?", userId).Preload("User").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
 	}
 
 	userWalletResponse := structs.UserWalletResponse{
