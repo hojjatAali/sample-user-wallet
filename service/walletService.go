@@ -2,23 +2,28 @@ package service
 
 import (
 	"errors"
-	"user_wallet/db"
+	"user_wallet/storage"
 	structs "user_wallet/struct"
 )
 
-type WalletService struct{}
+type WalletService struct {
+	storage storage.WalletStorage
+}
 
 func (ws *WalletService) GetUserWallet(userId int) (structs.User, structs.Wallet, error) {
 
-	var user structs.User
 	var wallet structs.Wallet
 
-	err := db.DB.Where("id = ?", userId).First(&user).Error
+	uService := UserService{}
+	user, err := uService.FindUser(userId)
 	if err != nil {
-		return user, wallet, errors.New("user not found")
+		return user, wallet, err
 	}
 
-	err = db.DB.Where("user_id = ?", userId).First(&wallet).Error
+	wStorage := storage.WStorage{}
+
+	wallet, err = wStorage.GetWallet(uint(userId))
+
 	if err != nil {
 		return user, wallet, errors.New("user does not have a wallet")
 	}
@@ -29,7 +34,6 @@ func (ws *WalletService) GetUserWallet(userId int) (structs.User, structs.Wallet
 
 func (ws *WalletService) CreateWallet(walletCreateRQ structs.WalletCreateRQ) (structs.Wallet, error) {
 	var wallet structs.Wallet
-	var user structs.User
 
 	if walletCreateRQ.UserId != nil {
 		wallet.UserId = *walletCreateRQ.UserId
@@ -38,16 +42,21 @@ func (ws *WalletService) CreateWallet(walletCreateRQ structs.WalletCreateRQ) (st
 		wallet.Balance = *walletCreateRQ.Balance
 	}
 
-	err := db.DB.Where("id = ?", wallet.UserId).First(&user).Error
+	uSorage := storage.UStorage{}
+	_, err := uSorage.GetUser(int(wallet.UserId))
 	if err != nil {
-		return wallet, errors.New("user not found")
+		return wallet, err
 	}
-	err = db.DB.Where("user_id = ?", wallet.UserId).First(&wallet).Error
+
+	wStorage := storage.WStorage{}
+
+	_, err = wStorage.GetWallet(wallet.UserId)
+
 	if err == nil {
 		return wallet, errors.New("user wallet already exists")
 	}
 
-	if err := db.DB.Create(&wallet).Error; err != nil {
+	if err := wStorage.CreateWallet(&wallet); err != nil {
 		return wallet, err
 	}
 

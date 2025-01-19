@@ -93,8 +93,8 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 func GetUsers(c *gin.Context) {
-	userServie := service.UserService{}
-	users, err := userServie.GetUsers()
+	userService := service.UserService{}
+	users, err := userService.GetUsers()
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
