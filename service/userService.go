@@ -2,7 +2,8 @@ package service
 
 import (
 	"errors"
-	"user_wallet/db"
+	"log"
+	"user_wallet/storage"
 	structs "user_wallet/struct"
 )
 
@@ -17,8 +18,12 @@ func (uS *UserService) CreateUser(userCR structs.UserCreateRQ) (structs.User, er
 		user.Email = userCR.Email
 	}
 
-	if err := db.DB.Create(&user).Error; err != nil {
-		return user, errors.New("dont create user")
+	uStorage := storage.UStorage{}
+
+	err := uStorage.CreateUser(&user)
+
+	if err != nil {
+		return user, err
 	}
 
 	return user, nil
@@ -37,8 +42,12 @@ func (uS *UserService) UpdateUser(userId int, userUpdateRQ structs.UserUpdateRQ)
 		user.Email = userUpdateRQ.Email
 	}
 
-	if err := db.DB.Updates(&user).Error; err != nil {
-		return user, errors.New("cant update user")
+	uStorage := storage.UStorage{}
+
+	err = uStorage.UpdateUser(&user)
+
+	if err != nil {
+		return user, errors.New("user update failed")
 	}
 
 	return user, err
@@ -46,7 +55,9 @@ func (uS *UserService) UpdateUser(userId int, userUpdateRQ structs.UserUpdateRQ)
 
 func (uS *UserService) FindUser(userId int) (user structs.User, err error) {
 
-	err = db.DB.Where("id = ?", userId).First(&user).Error
+	uStorage := storage.UStorage{}
+	user, err = uStorage.GetUser(userId)
+
 	if err != nil {
 		return user, errors.New("user not found")
 	}
@@ -55,42 +66,49 @@ func (uS *UserService) FindUser(userId int) (user structs.User, err error) {
 
 }
 func (uS *UserService) GetUser(userId int) (structs.UserWalletResponse, error) {
-	userWalletresponse := structs.UserWalletResponse{}
+	userWalletResponse := structs.UserWalletResponse{}
 
 	user, err := uS.FindUser(userId)
 	if err != nil {
-		return userWalletresponse, errors.New("user not found")
+		return userWalletResponse, err
 	}
-	userWalletresponse.User = user
+	userWalletResponse.User = user
 
 	var wallet structs.Wallet
-	if err := db.DB.First(&wallet, "user_id = ?", userId).Preload("User").Error; err != nil {
-		return userWalletresponse, nil
-	}
 
-	userWalletresponse.Wallet = wallet
+	wService := WalletService{}
 
-	return userWalletresponse, nil
+	_, wallet, err = wService.GetUserWallet(userId)
+
+	userWalletResponse.Wallet = wallet
+
+	return userWalletResponse, nil
 }
 
 func (uS *UserService) DeleteUser(userId int) error {
 	_, err := uS.FindUser(userId)
 
 	if err != nil {
-		return errors.New("user not found")
+		return err
 	}
 
-	if err := db.DB.Delete(&structs.User{}, userId).Error; err != nil {
-		return errors.New("delete failed")
+	uStorage := storage.UStorage{}
+	err = uStorage.DeleteUser(userId)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 func (uS *UserService) GetUsers() (users []*structs.User, err error) {
 
-	if err := db.DB.Find(&users).Error; err != nil {
-		return nil, errors.New("can not get users")
+	uStorage := storage.UStorage{}
+	users, err = uStorage.GetAllUsers()
+	log.Print(users, err)
+	if err != nil {
+		return nil, err
 	}
+
 	return users, nil
 
 }

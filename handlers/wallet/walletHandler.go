@@ -17,9 +17,9 @@ func CreateWallet(c *gin.Context) {
 		return
 	}
 
-	walletService := service.WalletService{}
+	wService := service.WalletService{}
 
-	wallet, err := walletService.CreateWallet(createWalletRQ)
+	wallet, err := wService.CreateWallet(createWalletRQ)
 
 	if err != nil {
 		var status int
