@@ -7,20 +7,18 @@ import (
 	structs "user_wallet/struct"
 )
 
-type UserService struct{}
+type UserService struct {
+	Storage storage.UserStorage
+}
 
 func (uS *UserService) CreateUser(userCR structs.UserCreateRQ) (structs.User, error) {
 	var user structs.User
-	if userCR.Name != "" {
-		user.Name = userCR.Name
-	}
-	if userCR.Email != "" {
-		user.Email = userCR.Email
-	}
 
-	uStorage := storage.UStorage{}
+	user.Name = userCR.Name
 
-	err := uStorage.CreateUser(&user)
+	user.Email = userCR.Email
+
+	err := uS.Storage.CreateUser(&user)
 
 	if err != nil {
 		return user, err
@@ -32,7 +30,7 @@ func (uS *UserService) CreateUser(userCR structs.UserCreateRQ) (structs.User, er
 func (uS *UserService) UpdateUser(userId int, userUpdateRQ structs.UserUpdateRQ) (structs.User, error) {
 	user, err := uS.FindUser(userId)
 	if err != nil {
-		return user, errors.New("user not found")
+		return user, err
 	}
 
 	if userUpdateRQ.Name != "" {
@@ -42,9 +40,7 @@ func (uS *UserService) UpdateUser(userId int, userUpdateRQ structs.UserUpdateRQ)
 		user.Email = userUpdateRQ.Email
 	}
 
-	uStorage := storage.UStorage{}
-
-	err = uStorage.UpdateUser(&user)
+	err = uS.Storage.UpdateUser(&user)
 
 	if err != nil {
 		return user, errors.New("user update failed")
@@ -55,11 +51,10 @@ func (uS *UserService) UpdateUser(userId int, userUpdateRQ structs.UserUpdateRQ)
 
 func (uS *UserService) FindUser(userId int) (user structs.User, err error) {
 
-	uStorage := storage.UStorage{}
-	user, err = uStorage.GetUser(userId)
+	user, err = uS.Storage.GetUser(userId)
 
 	if err != nil {
-		return user, errors.New("user not found")
+		return user, err
 	}
 
 	return user, nil
@@ -92,8 +87,7 @@ func (uS *UserService) DeleteUser(userId int) error {
 		return err
 	}
 
-	uStorage := storage.UStorage{}
-	err = uStorage.DeleteUser(userId)
+	err = uS.Storage.DeleteUser(userId)
 	if err != nil {
 		return err
 	}
@@ -102,8 +96,7 @@ func (uS *UserService) DeleteUser(userId int) error {
 
 func (uS *UserService) GetUsers() (users []*structs.User, err error) {
 
-	uStorage := storage.UStorage{}
-	users, err = uStorage.GetAllUsers()
+	users, err = uS.Storage.GetAllUsers()
 	log.Print(users, err)
 	if err != nil {
 		return nil, err

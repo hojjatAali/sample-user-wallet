@@ -9,6 +9,8 @@ import (
 	"user_wallet/struct"
 )
 
+var userService = service.UserService{}
+
 func CreateUser(c *gin.Context) {
 	var user structs.UserCreateRQ
 
@@ -16,7 +18,6 @@ func CreateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	userService := service.UserService{}
 
 	newUser, err := userService.CreateUser(user)
 
@@ -36,7 +37,6 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	userService := service.UserService{}
 	userWalletResponse, err := userService.GetUser(userID)
 
 	if err != nil {
@@ -66,8 +66,6 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	userService := service.UserService{}
-
 	updatedUser, err := userService.UpdateUser(userId, user)
 
 	if err != nil {
@@ -81,8 +79,6 @@ func UpdateUser(c *gin.Context) {
 func DeleteUser(c *gin.Context) {
 	userId, err := strconv.Atoi(c.Param("id"))
 
-	userService := service.UserService{}
-
 	err = userService.DeleteUser(userId)
 
 	if err != nil {
@@ -93,7 +89,6 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 func GetUsers(c *gin.Context) {
-	userService := service.UserService{}
 	users, err := userService.GetUsers()
 
 	if err != nil {

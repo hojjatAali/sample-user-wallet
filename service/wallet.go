@@ -20,10 +20,7 @@ func (ws *WalletService) GetUserWallet(userId int) (structs.User, structs.Wallet
 		return user, wallet, err
 	}
 
-	wStorage := storage.WStorage{}
-
-	wallet, err = wStorage.GetWallet(uint(userId))
-
+	wallet, err = ws.storage.GetWallet(uint(userId))
 	if err != nil {
 		return user, wallet, errors.New("user does not have a wallet")
 	}
@@ -42,21 +39,19 @@ func (ws *WalletService) CreateWallet(walletCreateRQ structs.WalletCreateRQ) (st
 		wallet.Balance = *walletCreateRQ.Balance
 	}
 
-	uSorage := storage.UStorage{}
+	uSorage := storage.UserStorage{}
 	_, err := uSorage.GetUser(int(wallet.UserId))
 	if err != nil {
 		return wallet, err
 	}
 
-	wStorage := storage.WStorage{}
-
-	_, err = wStorage.GetWallet(wallet.UserId)
+	_, err = ws.storage.GetWallet(wallet.UserId)
 
 	if err == nil {
 		return wallet, errors.New("user wallet already exists")
 	}
 
-	if err := wStorage.CreateWallet(&wallet); err != nil {
+	if err := ws.storage.CreateWallet(&wallet); err != nil {
 		return wallet, err
 	}
 

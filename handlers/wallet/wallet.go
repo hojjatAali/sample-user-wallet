@@ -8,6 +8,8 @@ import (
 	"user_wallet/struct"
 )
 
+var wS = service.WalletService{}
+
 func CreateWallet(c *gin.Context) {
 
 	var createWalletRQ structs.WalletCreateRQ
@@ -17,9 +19,7 @@ func CreateWallet(c *gin.Context) {
 		return
 	}
 
-	wService := service.WalletService{}
-
-	wallet, err := wService.CreateWallet(createWalletRQ)
+	wallet, err := wS.CreateWallet(createWalletRQ)
 
 	if err != nil {
 		var status int
@@ -48,8 +48,7 @@ func GetWalletByUserId(c *gin.Context) {
 		return
 	}
 
-	walletService := service.WalletService{}
-	user, wallet, err := walletService.GetUserWallet(userId)
+	user, wallet, err := wS.GetUserWallet(userId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
