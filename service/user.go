@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"user_wallet/storage"
 	structs "user_wallet/struct"
@@ -11,14 +12,20 @@ type UserService struct {
 	Storage storage.UserStorage
 }
 
-func (uS *UserService) CreateUser(userCR structs.UserCreateRQ) (structs.User, error) {
-	var user structs.User
+func (uS *UserService) CreateUser(rq structs.UserCreateRQ) (structs.User, error) {
 
-	user.Name = userCR.Name
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(rq.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return structs.User{}, err
+	}
 
-	user.Email = userCR.Email
+	user := structs.User{
+		Name:     rq.Name,
+		Email:    rq.Email,
+		Password: string(hashPassword),
+	}
 
-	err := uS.Storage.CreateUser(&user)
+	err = uS.Storage.CreateUser(&user)
 
 	if err != nil {
 		return user, err

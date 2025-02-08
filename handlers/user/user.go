@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"strconv"
 	"user_wallet/service"
@@ -14,7 +15,14 @@ var userService = service.UserService{}
 func CreateUser(c *gin.Context) {
 	var user structs.UserCreateRQ
 
+	validate := validator.New()
+
 	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := validate.Struct(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
