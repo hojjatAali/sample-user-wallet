@@ -40,3 +40,13 @@ func (us *UserStorage) GetAllUsers() ([]*structs.User, error) {
 func (us *UserStorage) CreateUser(user *structs.User) error {
 	return db.DB.Create(&user).Error
 }
+
+func (us *UserStorage) GetUserByEmail(email string) (structs.User, error) {
+
+	user := structs.User{}
+	err := db.DB.Where("email = ?", email).First(&user).Error
+	if err != nil {
+		return user, err
+	}
+	return user, nil
+}

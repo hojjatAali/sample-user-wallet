@@ -112,3 +112,20 @@ func (uS *UserService) GetUsers() (users []*structs.User, err error) {
 	return users, nil
 
 }
+
+func (uS UserService) Login(user structs.UserLoginRQ) (*structs.User, error) {
+
+	getUser, err := uS.Storage.GetUserByEmail(user.Email)
+
+	if err != nil {
+		return nil, err
+	}
+	log.Println(user.Password, "kkkkkk", getUser.Password)
+
+	if err := bcrypt.CompareHashAndPassword([]byte(getUser.Password), []byte(user.Password)); err != nil {
+
+		return nil, err
+	}
+
+	return &getUser, nil
+}

@@ -4,7 +4,7 @@ type User struct {
 	ID       uint   `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
-	Password string `json:"password"`
+	Password string `json:"-"`
 }
 
 type UserCreateRQ struct {
@@ -18,6 +18,10 @@ type UserUpdateRQ struct {
 	Email           string `json:"email" validate:"required"`
 	Password        string `json:"password" validate:"required"`
 	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=password"`
+}
+type UserLoginRQ struct {
+	Email    string `json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 func (u *UserCreateRQ) Validate() error {

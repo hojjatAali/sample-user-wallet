@@ -6,6 +6,7 @@ func InitRoutes(c *gin.Engine) {
 	userRoutes := c.Group("/users")
 	{
 		userRoutes.POST("", CreateUser)
+		userRoutes.POST("/login", Login)
 		userRoutes.GET("", GetUsers)
 		userRoutes.GET("/:id", GetUser)
 		userRoutes.PUT("/:id", UpdateUser)

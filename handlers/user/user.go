@@ -106,3 +106,28 @@ func GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 
 }
+
+func Login(c *gin.Context) {
+	user := structs.UserLoginRQ{}
+
+	validate := validator.New()
+
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := validate.Struct(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err := userService.Login(user)
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"login successful ": ""})
+
+}
